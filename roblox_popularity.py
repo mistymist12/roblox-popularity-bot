@@ -3,12 +3,10 @@ import requests
 
 WEBHOOK = os.environ["DISCORD_WEBHOOK"]
 
-url = "https://games.roblox.com/v1/games/list"
+url = "https://games.roblox.com/v1/games"
 
 params = {
-    "sortToken": "",
-    "gameSetTargetId": 1,
-    "maxRows": 10
+    "universeIds": "1818"
 }
 
 response = requests.get(url, params=params)
@@ -16,21 +14,27 @@ response.raise_for_status()
 
 data = response.json()
 
-games = data.get("games", [])
+games = data.get("data", [])
 
 if not games:
     requests.post(WEBHOOK, json={
-        "content": "⚠️ I couldn't retrieve Roblox trending games right now."
+        "content": "⚠️ Roblox did not return any game data."
     })
     raise SystemExit
 
-message = "🔥 **Roblox Trending Games**\n\n"
+game = games[0]
 
-for i, game in enumerate(games[:10], 1):
-    name = game.get("name", "Unknown Game")
-    players = game.get("playing", 0)
-    message += f"**{i}. {name}** — 👥 {players:,} players\n"
+name = game.get("name", "Unknown Game")
+players = game.get("playing", 0)
 
-requests.post(WEBHOOK, json={
+message = (
+    "🔥 **Roblox Popularity Test**\n\n"
+    f"🎮 **{name}**\n"
+    f"👥 Players: **{players:,}**"
+)
+
+result = requests.post(WEBHOOK, json={
     "content": message
 })
+
+result.raise_for_status()
